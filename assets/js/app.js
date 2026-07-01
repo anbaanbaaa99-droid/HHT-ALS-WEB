@@ -2,8 +2,9 @@
  * ==========================================
  * HHT ASSET MANAGEMENT
  * File      : app.js
- * Version   : 2.0.0
+ * Version   : 2.1.0
  * Mode      : Single Page Application
+ * Feature   : Foto wajah pinjam & kembali
  * Depends   : config.js, api.js, Bootstrap, SweetAlert2
  * ==========================================
  */
@@ -34,6 +35,8 @@ window.addEventListener("load", function () {
   initModal();
 
   initForm();
+
+  initPhotoPreview();
 
   loadPage(CONFIG.DEFAULT_PAGE);
 
@@ -179,6 +182,148 @@ function initForm() {
 
 /**
  * ==========================================
+ * PHOTO PREVIEW
+ * ==========================================
+ */
+
+function initPhotoPreview() {
+
+  const borrowPhoto = document.getElementById("borrowPhoto");
+  const returnPhoto = document.getElementById("returnPhoto");
+
+  if (borrowPhoto) {
+    borrowPhoto.addEventListener("change", function () {
+      previewPhoto("borrowPhoto", "borrowPhotoPreview");
+    });
+  }
+
+  if (returnPhoto) {
+    returnPhoto.addEventListener("change", function () {
+      previewPhoto("returnPhoto", "returnPhotoPreview");
+    });
+  }
+
+}
+
+
+function previewPhoto(inputId, previewId) {
+
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
+
+  if (!input || !preview) return;
+
+  const file = input.files[0];
+
+  if (!file) {
+    preview.src = "";
+    preview.classList.remove("show");
+    return;
+  }
+
+  if (!file.type.startsWith("image/")) {
+    Swal.fire("Validasi", "File harus berupa gambar", "warning");
+    input.value = "";
+    preview.src = "";
+    preview.classList.remove("show");
+    return;
+  }
+
+  const url = URL.createObjectURL(file);
+
+  preview.src = url;
+  preview.classList.add("show");
+
+}
+
+
+function resetPhoto(inputId, previewId) {
+
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
+
+  if (input) {
+    input.value = "";
+  }
+
+  if (preview) {
+    preview.src = "";
+    preview.classList.remove("show");
+  }
+
+}
+
+
+/**
+ * Convert foto ke base64.
+ * Foto otomatis dikompres agar tidak terlalu besar saat dikirim ke Apps Script.
+ */
+function imageFileToBase64(file, maxWidth = 900, quality = 0.75) {
+
+  return new Promise(function (resolve, reject) {
+
+    if (!file) {
+      reject(new Error("Foto belum dipilih"));
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      reject(new Error("File harus berupa gambar"));
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function (event) {
+
+      const img = new Image();
+
+      img.onload = function () {
+
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        const canvas = document.createElement("canvas");
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const base64 = canvas.toDataURL("image/jpeg", quality);
+
+        resolve(base64);
+
+      };
+
+      img.onerror = function () {
+        reject(new Error("Gagal membaca gambar"));
+      };
+
+      img.src = event.target.result;
+
+    };
+
+    reader.onerror = function () {
+      reject(new Error("Gagal membaca file foto"));
+    };
+
+    reader.readAsDataURL(file);
+
+  });
+
+}
+
+
+/**
+ * ==========================================
  * ROUTER
  * ==========================================
  */
@@ -305,9 +450,7 @@ async function renderDashboardPage() {
   const search = document.getElementById("dashboardSearch");
 
   if (search) {
-    search.addEventListener("input", function () {
-      renderDashboardGrid();
-    });
+    search.addEventListener("input", renderDashboardGrid);
   }
 
 }
@@ -411,7 +554,7 @@ async function renderBorrowPage() {
     <div class="page-header">
       <div>
         <h1>Peminjaman HHT</h1>
-        <p>Pilih HHT yang tersedia, lalu isi data peminjam.</p>
+        <p>Pilih HHT yang tersedia, lalu isi data peminjam dan foto wajah.</p>
       </div>
 
       <button class="btn btn-primary" onclick="renderBorrowPage()">
@@ -593,6 +736,8 @@ function openBorrowModal(id) {
 
   document.getElementById("borrowDepartment").value = "";
 
+  resetPhoto("borrowPhoto", "borrowPhotoPreview");
+
   APP_STATE.borrowModal.show();
 
 }
@@ -602,10 +747,19 @@ async function submitBorrow(event) {
 
   event.preventDefault();
 
+  const photoInput = document.getElementById("borrowPhoto");
+  const photoFile = photoInput.files[0];
+
+  if (!photoFile) {
+    Swal.fire("Validasi", "Foto wajah peminjam wajib dilampirkan", "warning");
+    return;
+  }
+
   const payload = {
     hhtId: document.getElementById("borrowHhtId").value,
     nama: document.getElementById("borrowName").value.trim(),
-    department: document.getElementById("borrowDepartment").value
+    department: document.getElementById("borrowDepartment").value,
+    photoBorrow: ""
   };
 
   if (!payload.nama) {
@@ -620,7 +774,7 @@ async function submitBorrow(event) {
 
   const confirm = await Swal.fire({
     title: "Konfirmasi Peminjaman",
-    text: "Apakah data peminjaman sudah benar?",
+    text: "Apakah data dan foto peminjam sudah benar?",
     icon: "question",
     showCancelButton: true,
     confirmButtonText: "Ya, Pinjam",
@@ -629,18 +783,37 @@ async function submitBorrow(event) {
 
   if (!confirm.isConfirmed) return;
 
-  const res = await API.post("borrow", payload);
+  Swal.fire({
+    title: "Memproses",
+    text: "Mengupload foto dan menyimpan transaksi...",
+    allowOutsideClick: false,
+    didOpen: function () {
+      Swal.showLoading();
+    }
+  });
 
-  if (!res.success) {
-    Swal.fire("Gagal", res.message, "error");
-    return;
+  try {
+
+    payload.photoBorrow = await imageFileToBase64(photoFile);
+
+    const res = await API.post("borrow", payload);
+
+    if (!res.success) {
+      Swal.fire("Gagal", res.message, "error");
+      return;
+    }
+
+    APP_STATE.borrowModal.hide();
+
+    await Swal.fire("Berhasil", res.message || "Peminjaman berhasil", "success");
+
+    renderBorrowPage();
+
+  } catch (error) {
+
+    Swal.fire("Gagal", error.message, "error");
+
   }
-
-  APP_STATE.borrowModal.hide();
-
-  await Swal.fire("Berhasil", res.message || "Peminjaman berhasil", "success");
-
-  renderBorrowPage();
 
 }
 
@@ -796,6 +969,8 @@ function openReturnModal(id) {
 
   document.getElementById("returnNote").value = "";
 
+  resetPhoto("returnPhoto", "returnPhotoPreview");
+
   APP_STATE.returnModal.show();
 
 }
@@ -805,14 +980,23 @@ async function submitReturn(event) {
 
   event.preventDefault();
 
+  const photoInput = document.getElementById("returnPhoto");
+  const photoFile = photoInput.files[0];
+
+  if (!photoFile) {
+    Swal.fire("Validasi", "Foto wajah pengembali wajib dilampirkan", "warning");
+    return;
+  }
+
   const payload = {
     hhtId: document.getElementById("returnHhtId").value,
-    note: document.getElementById("returnNote").value.trim()
+    note: document.getElementById("returnNote").value.trim(),
+    photoReturn: ""
   };
 
   const confirm = await Swal.fire({
     title: "Konfirmasi Pengembalian",
-    text: "Apakah HHT ini sudah benar-benar dikembalikan?",
+    text: "Apakah HHT dan foto pengembali sudah benar?",
     icon: "question",
     showCancelButton: true,
     confirmButtonText: "Ya, Kembalikan",
@@ -821,18 +1005,37 @@ async function submitReturn(event) {
 
   if (!confirm.isConfirmed) return;
 
-  const res = await API.post("return", payload);
+  Swal.fire({
+    title: "Memproses",
+    text: "Mengupload foto dan menyimpan pengembalian...",
+    allowOutsideClick: false,
+    didOpen: function () {
+      Swal.showLoading();
+    }
+  });
 
-  if (!res.success) {
-    Swal.fire("Gagal", res.message, "error");
-    return;
+  try {
+
+    payload.photoReturn = await imageFileToBase64(photoFile);
+
+    const res = await API.post("return", payload);
+
+    if (!res.success) {
+      Swal.fire("Gagal", res.message, "error");
+      return;
+    }
+
+    APP_STATE.returnModal.hide();
+
+    await Swal.fire("Berhasil", res.message || "Pengembalian berhasil", "success");
+
+    renderReturnPage();
+
+  } catch (error) {
+
+    Swal.fire("Gagal", error.message, "error");
+
   }
-
-  APP_STATE.returnModal.hide();
-
-  await Swal.fire("Berhasil", res.message || "Pengembalian berhasil", "success");
-
-  renderReturnPage();
 
 }
 
@@ -883,13 +1086,16 @@ async function renderReportPage() {
               <th>Department</th>
               <th>Pinjam</th>
               <th>Kembali</th>
+              <th>Foto Pinjam</th>
+              <th>Foto Kembali</th>
+              <th>Durasi</th>
               <th>Status</th>
             </tr>
           </thead>
 
           <tbody id="reportBody">
             <tr>
-              <td colspan="7">
+              <td colspan="10">
                 ${loadingHTML()}
               </td>
             </tr>
@@ -921,7 +1127,7 @@ async function loadReportData() {
 
     document.getElementById("reportBody").innerHTML = `
       <tr>
-        <td colspan="7" class="text-center text-muted py-4">
+        <td colspan="10" class="text-center text-muted py-4">
           Endpoint transaksi belum aktif di backend.
         </td>
       </tr>
@@ -956,7 +1162,7 @@ function renderReportTable() {
 
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" class="text-center text-muted py-4">
+        <td colspan="10" class="text-center text-muted py-4">
           Data transaksi tidak ditemukan.
         </td>
       </tr>
@@ -970,6 +1176,9 @@ function renderReportTable() {
 
   filtered.forEach(function (item) {
 
+    const fotoPinjam = item.foto_pinjam_url || item.FOTO_PINJAM_URL || "";
+    const fotoKembali = item.foto_kembali_url || item.FOTO_KEMBALI_URL || "";
+
     html += `
       <tr>
         <td>${item.transaction_id || item.TRANSACTION_ID || "-"}</td>
@@ -978,6 +1187,9 @@ function renderReportTable() {
         <td>${item.department || item.DEPARTMENT || "-"}</td>
         <td>${formatDateTime(item.pinjam_at || item.PINJAM_AT)}</td>
         <td>${formatDateTime(item.kembali_at || item.KEMBALI_AT)}</td>
+        <td>${photoLink(fotoPinjam)}</td>
+        <td>${photoLink(fotoKembali)}</td>
+        <td>${item.durasi || item.DURASI || "-"}</td>
         <td>${statusBadge(item.status || item.STATUS)}</td>
       </tr>
     `;
@@ -985,6 +1197,20 @@ function renderReportTable() {
   });
 
   tbody.innerHTML = html;
+
+}
+
+
+function photoLink(url) {
+
+  if (!url) return "-";
+
+  return `
+    <a href="${url}" target="_blank" class="photo-link">
+      <i class="bi bi-image"></i>
+      Lihat
+    </a>
+  `;
 
 }
 
