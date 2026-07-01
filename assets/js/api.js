@@ -1,29 +1,41 @@
 /**
  * ==========================================
  * HHT ASSET MANAGEMENT
- * API CLIENT
+ * File      : api.js
+ * Version   : 2.0.0
+ * Mode      : Single Page Application
+ * Depends   : config.js
  * ==========================================
  */
 
 const API = {
 
+  /**
+   * GET Request
+   * Contoh:
+   * API.get("dashboard")
+   */
   async get(action) {
 
     try {
 
       const url = `${CONFIG.API_URL}?action=${encodeURIComponent(action)}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        method: "GET"
+      });
 
-      return await response.json();
+      const result = await response.json();
+
+      return result;
 
     } catch (error) {
 
-      console.error("GET API ERROR:", error);
+      console.error("API GET ERROR:", error);
 
       return {
         success: false,
-        message: error.message,
+        message: error.message || "Gagal mengambil data",
         data: null
       };
 
@@ -31,6 +43,12 @@ const API = {
 
   },
 
+
+  /**
+   * POST Request
+   * Contoh:
+   * API.post("borrow", { hhtId: 1, nama: "Budi" })
+   */
   async post(action, data = {}) {
 
     try {
@@ -42,15 +60,17 @@ const API = {
         body: JSON.stringify(data)
       });
 
-      return await response.json();
+      const result = await response.json();
+
+      return result;
 
     } catch (error) {
 
-      console.error("POST API ERROR:", error);
+      console.error("API POST ERROR:", error);
 
       return {
         success: false,
-        message: error.message,
+        message: error.message || "Gagal mengirim data",
         data: null
       };
 
@@ -63,26 +83,109 @@ const API = {
 
 /**
  * ==========================================
- * STATUS BADGE
+ * HELPER UI
  * ==========================================
  */
 
+
+/**
+ * Badge Status HHT
+ */
 function statusBadge(status) {
 
   const value = String(status || "").toUpperCase();
 
-  if (value === "AVAILABLE") {
+  if (value === CONFIG.STATUS.AVAILABLE) {
 
-    return `<span class="badge-soft badge-available">AVAILABLE</span>`;
+    return `
+      <span class="badge-soft badge-available">
+        <i class="bi bi-check-circle me-1"></i>
+        AVAILABLE
+      </span>
+    `;
 
   }
 
-  if (value === "BORROWED") {
+  if (value === CONFIG.STATUS.BORROWED) {
 
-    return `<span class="badge-soft badge-borrowed">BORROWED</span>`;
+    return `
+      <span class="badge-soft badge-borrowed">
+        <i class="bi bi-exclamation-circle me-1"></i>
+        BORROWED
+      </span>
+    `;
 
   }
 
-  return `<span class="badge-soft badge-borrowed">${value || "-"}</span>`;
+  if (value === CONFIG.STATUS.RETURNED) {
+
+    return `
+      <span class="badge-soft badge-returned">
+        <i class="bi bi-arrow-return-left me-1"></i>
+        RETURNED
+      </span>
+    `;
+
+  }
+
+  return `
+    <span class="badge-soft badge-borrowed">
+      ${value || "-"}
+    </span>
+  `;
+
+}
+
+
+/**
+ * Loading HTML
+ */
+function loadingHTML(text = "Memuat data...") {
+
+  return `
+    <div class="loading-box">
+      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+      <span>${text}</span>
+    </div>
+  `;
+
+}
+
+
+/**
+ * Empty State HTML
+ */
+function emptyHTML(text = "Data tidak ditemukan") {
+
+  return `
+    <div class="empty-state">
+      <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+      ${text}
+    </div>
+  `;
+
+}
+
+
+/**
+ * Format tanggal sederhana
+ */
+function formatDateTime(value) {
+
+  if (!value) return "-";
+
+  const date = new Date(value);
+
+  if (isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 
 }
