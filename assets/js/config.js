@@ -22,7 +22,7 @@ const CONFIG = {
 
   VERSION: "2.0.0",
 
-  DEFAULT_PAGE: "dashboard",
+  DEFAULT_PAGE: "borrow",
 
   STATUS: {
     AVAILABLE: "AVAILABLE",
