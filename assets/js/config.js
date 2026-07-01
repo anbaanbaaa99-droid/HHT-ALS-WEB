@@ -1,17 +1,33 @@
 /**
  * ==========================================
  * HHT ASSET MANAGEMENT
- * CONFIG
+ * File      : config.js
+ * Version   : 2.0.0
+ * Mode      : Single Page Application
  * ==========================================
  */
 
 const CONFIG = {
 
-    // URL WEB APP APPS SCRIPT
-    API_URL: "https://script.google.com/macros/s/AKfycbzlV8QgpCRK3VHbJy0VJvVq5ZqXyj98XigSi1tjFwBjNgLYX7Rnp6cDnuI_9_hSqOz9BQ/exec",
+  /**
+   * URL Web App Google Apps Script
+   * 
+   * Ganti nilai di bawah ini dengan URL deployment Apps Script Anda.
+   * Contoh:
+   * https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxx/exec
+   */
+  API_URL: "https://script.google.com/macros/s/AKfycbzlV8QgpCRK3VHbJy0VJvVq5ZqXyj98XigSi1tjFwBjNgLYX7Rnp6cDnuI_9_hSqOz9BQ/exec",
 
-    APP_NAME: "HHT Asset Management",
+  APP_NAME: "HHT Asset Management",
 
-    VERSION: "1.0.0"
+  VERSION: "2.0.0",
+
+  DEFAULT_PAGE: "dashboard",
+
+  STATUS: {
+    AVAILABLE: "AVAILABLE",
+    BORROWED: "BORROWED",
+    RETURNED: "RETURNED"
+  }
 
 };
