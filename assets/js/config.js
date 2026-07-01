@@ -2,8 +2,8 @@
  * ==========================================
  * HHT ASSET MANAGEMENT
  * File      : config.js
- * Version   : 2.0.0
- * Mode      : Single Page Application
+ * Version   : 2.2.0
+ * Mode      : Simple Operational Flow
  * ==========================================
  */
 
