@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Peminjaman | HHT Asset Management</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <link href="assets/css/style.css" rel="stylesheet">
+</head>
+
+<body>
+
+  <script src="assets/components/sidebar.js"></script>
+  <script src="assets/components/navbar.js"></script>
+
+  <main class="main-content">
+
+    <div class="page-header">
+      <div>
+        <h1>Peminjaman HHT</h1>
+        <p>Pilih HHT yang tersedia, lalu isi data peminjam.</p>
+      </div>
+
+      <button class="btn btn-primary" onclick="loadBorrowPage()">
+        <i class="bi bi-arrow-clockwise"></i>
+        Refresh
+      </button>
+    </div>
+
+    <section class="panel">
+
+      <div class="panel-header">
+        <h5>Pilih HHT</h5>
+
+        <input 
+          type="text" 
+          id="searchInput" 
+          class="form-control search-box" 
+          placeholder="Cari HHT..."
+        >
+      </div>
+
+      <div id="borrowGrid" class="hht-grid"></div>
+
+    </section>
+
+  </main>
+
+
+  <!-- MODAL PEMINJAMAN -->
+  <div class="modal fade" id="borrowModal" tabindex="-1">
+    <div class="modal-dialog">
+      <form class="modal-content" id="borrowForm">
+
+        <div class="modal-header">
+          <h5 class="modal-title">Form Peminjaman HHT</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <input type="hidden" id="hhtId">
+
+          <div class="mb-3">
+            <label class="form-label">HHT</label>
+            <input type="text" id="hhtName" class="form-control" readonly>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Nama Peminjam</label>
+            <input 
+              type="text" 
+              id="nama" 
+              class="form-control" 
+              required 
+              placeholder="Masukkan nama peminjam"
+            >
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Department</label>
+            <select id="department" class="form-select" required>
+              <option value="">Loading...</option>
+            </select>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+            Batal
+          </button>
+
+          <button type="submit" class="btn btn-primary">
+            Pinjam
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/pages/pinjam.js"></script>
+
+</body>
+</html>
