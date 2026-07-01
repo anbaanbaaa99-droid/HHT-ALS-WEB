@@ -67,12 +67,10 @@
     </nav>
 
     <div class="sidebar-footer">
-
       <a href="#" class="menu-link" data-page="setting">
         <i class="bi bi-gear"></i>
         <span>Setting</span>
       </a>
-
     </div>
 
   </aside>
@@ -151,6 +149,30 @@
             </select>
           </div>
 
+          <div class="mb-3">
+            <label class="form-label">
+              Foto Wajah Peminjam
+              <span class="text-danger">*</span>
+            </label>
+
+            <input 
+              type="file" 
+              id="borrowPhoto" 
+              class="form-control" 
+              accept="image/*" 
+              capture="user"
+              required
+            >
+
+            <div class="form-text">
+              Ambil foto wajah peminjam menggunakan kamera.
+            </div>
+
+            <div class="photo-preview mt-3">
+              <img id="borrowPhotoPreview" src="" alt="Preview Foto Peminjam">
+            </div>
+          </div>
+
         </div>
 
         <div class="modal-footer">
@@ -184,6 +206,30 @@
 
           <div class="alert alert-info" id="returnInfo">
             Data HHT
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">
+              Foto Wajah Pengembali
+              <span class="text-danger">*</span>
+            </label>
+
+            <input 
+              type="file" 
+              id="returnPhoto" 
+              class="form-control" 
+              accept="image/*" 
+              capture="user"
+              required
+            >
+
+            <div class="form-text">
+              Ambil foto wajah orang yang mengembalikan HHT.
+            </div>
+
+            <div class="photo-preview mt-3">
+              <img id="returnPhotoPreview" src="" alt="Preview Foto Pengembali">
+            </div>
           </div>
 
           <div class="mb-3">
